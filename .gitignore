@@ -1,0 +1,7 @@
+build/
+.dart_tool/
+node_modules/
+functions/.env
+android/app/google-services.json
+.firebase/
+*.log

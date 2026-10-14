@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    match /restaurants/{rid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == rid;
+    }
+    // customer status pages: read one doc by its unguessable id, never list
+    match /status/{id} {
+      allow get: if true;
+      allow list, write: if false;
+    }
+  }
+}
