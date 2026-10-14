@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your Queue Status</title>
+<style>
+ body{font-family:system-ui,sans-serif;background:#fff3ec;margin:0;display:flex;justify-content:center;padding:20px}
+ .c{background:#fff;max-width:380px;width:100%;border-radius:18px;padding:24px;text-align:center;box-shadow:0 4px 16px #0002}
+ .big{font-size:64px;font-weight:700;color:#e64a19;margin:8px 0}
+ .st{padding:8px 14px;border-radius:20px;background:#eee;display:inline-block;margin:8px 0}
+ button{width:100%;padding:14px;margin-top:10px;font-size:16px;border:0;border-radius:10px;background:#e64a19;color:#fff}
+ button.g{background:#eee;color:#333}
+</style></head><body>
+<div class="c" id="app">Loading…</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
+<script>
+// Paste your Firebase web config (Firebase console > Project settings > Your apps > Web)
+firebase.initializeApp({ apiKey:"YOUR_KEY", authDomain:"YOUR-PROJECT.firebaseapp.com", projectId:"YOUR-PROJECT" });
+const id = location.pathname.split("/").filter(Boolean).pop();
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+firebase.firestore().doc("status/" + id).onSnapshot(s => {
+  if (!s.exists) { app.textContent = "Link not found."; return; }
+  const d = s.data(), h = [`<h2>${esc(d.restaurant)}</h2><div>Hello ${esc(d.name)} · ${d.pax} guests</div><div>Token <b>T${d.token}</b></div>`];
+  if (d.status === "waiting") h.push(`<div class="big">#${d.position}</div><div>in line · about <b>${d.etaMin} min</b></div>
+      <button onclick="late()">I'm running late</button><button class="g" onclick="cancelSpot()">Cancel my spot</button>`);
+  else if (d.status === "notified") h.push(`<div class="big">🍽️</div><div class="st">Your table is ready! Please come to the reception.</div>`);
+  else if (d.status === "seated") h.push(`<div class="st">Enjoy your meal 🙏</div>`);
+  else h.push(`<div class="st">Status: ${esc(d.status)}</div>`);
+  app.innerHTML = h.join("");
+});
+function cancelSpot(){ if(confirm("Cancel your spot?")) firebase.functions().httpsCallable("customerCancel")({id}); }
+function late(){ alert("Please call the restaurant to let them know. They will hold your spot for a few minutes."); }
+</script></body></html>
